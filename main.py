@@ -1,4 +1,5 @@
 import sys
+import threading
 from Car import *
 from GUI import GUI
 
@@ -6,11 +7,10 @@ from GUI import GUI
 def main():
     args = sys.argv
     o = Opponents(int(args[1]))
-    print(o.getPositions())
-    o.move(1)
-    print(o.getPositions())
-    gui = GUI(o)
+    print(threading.active_count())
+    gui = GUI(o, int(args[2]))
     gui.run()
+    print(threading.active_count())
 
 
 if __name__ == "__main__":

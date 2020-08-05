@@ -3,7 +3,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 
 class GUI(tk.Tk):
-    def __init__(self, opponents):
+    def __init__(self, opponents, interval):
         global tkimg
         super(GUI, self).__init__()
         self.title("simulator")
@@ -11,6 +11,7 @@ class GUI(tk.Tk):
         self.resizable(width=0, height=0)
         
         self.opps = opponents
+        self.interval = interval
         
         img = Image.open("img/car.png")
         self.oppImage = img
@@ -19,6 +20,7 @@ class GUI(tk.Tk):
         
 
     def run(self):
+        self.after(2000, self.update_widgets)
         self.mainloop()
         
     def set_widgets(self):
@@ -35,7 +37,7 @@ class GUI(tk.Tk):
             position = self.opps.get(i).getPosition()
             angle = self.opps.get(i).theta * 180 / np.pi
             tkimgs.append(ImageTk.PhotoImage(image=self.oppImage.rotate(angle, expand=True, fillcolor="white"), master=self))
-            print(i,position)
+            #print(i,position)
             #print((int(position[0] * 60), int(position[1] * 60)))
             self.board.create_image(int(position[0] * 60 + 300), 900 - int(position[1] * 60), image=tkimgs[i])
             
@@ -46,7 +48,8 @@ class GUI(tk.Tk):
         #self.button.pack()
         
     def update_widgets(self):
-        self.opps.move(0.1)
+        self.opps.move(self.interval / 1000)
         #self.set_widgets()
         self.board.delete("all")
         self.set_opponents()
+        self.after(self.interval, self.update_widgets)

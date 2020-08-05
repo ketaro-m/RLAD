@@ -33,12 +33,12 @@ class Agent(Car):
         dy = np.sin(self.theta + omega * t / 2) * self.v
         self.x += dx * t
         self.y += dy * t
-        self.theta += omega
+        self.theta += omega * t
         
 class Opponent(Car):
     MAX_SPEED = 5
-    ACCELERATION = 2
-    OMEGA = np.pi /4
+    ACCELERATION = 5
+    OMEGA = np.pi * 2 / 3
     
     def __init__(self, x, y, theta, v):
         super().__init__(x, y, theta, v)

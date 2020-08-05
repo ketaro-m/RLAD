@@ -3,18 +3,18 @@ import tkinter as tk
 from PIL import Image, ImageTk
 
 class GUI(tk.Tk):
-    def __init__(self, opponents, interval):
-        global tkimg
+    def __init__(self, agent, opponents, interval):
         super(GUI, self).__init__()
         self.title("simulator")
-        self.geometry("{}x{}+{}+{}".format(600, 900, 100, 50))
+        self.geometry("{}x{}+{}+{}".format(600, 930, 100, 50))
         self.resizable(width=0, height=0)
         
+        self.agent = agent
         self.opps = opponents
         self.interval = interval
         
-        img = Image.open("img/car.png")
-        self.oppImage = img
+        self.oppImage = Image.open("img/car.png")
+        self.agentImage = Image.open("img/agent.png")
         self.set_widgets()
         self.set_button()
         
@@ -27,6 +27,7 @@ class GUI(tk.Tk):
         ### road ###
         self.board = tk.Canvas(self, width=600, height=930, bg="white")
         self.set_opponents()
+        self.set_agent()
         self.board.place(x=0, y=30)
         #self.board.pack()
         
@@ -37,9 +38,17 @@ class GUI(tk.Tk):
             position = self.opps.get(i).getPosition()
             angle = self.opps.get(i).theta * 180 / np.pi
             tkimgs.append(ImageTk.PhotoImage(image=self.oppImage.rotate(angle, expand=True, fillcolor="white"), master=self))
-            #print(i,position)
+            #print("opponent "+str(i),", positoin "+str(position), ", angle "+str(angle))
             #print((int(position[0] * 60), int(position[1] * 60)))
             self.board.create_image(int(position[0] * 60 + 300), 900 - int(position[1] * 60), image=tkimgs[i])
+            
+    def set_agent(self):
+        global tkimg
+        position = self.agent.getPosition()
+        angle = self.agent.theta * 180 / np.pi
+        tkimg = ImageTk.PhotoImage(image=self.agentImage.rotate(angle, expand=True, fillcolor="white"), master=self)
+        #print("agent", ", position "+str(position), ", angle "+str(angle))
+        self.board.create_image(int(position[0] * 60 + 300), 900 - int(position[1] * 60), image=tkimg)
             
             
     def set_button(self):
@@ -48,8 +57,10 @@ class GUI(tk.Tk):
         #self.button.pack()
         
     def update_widgets(self):
-        self.opps.move(self.interval / 1000)
+        self.opps.move(self.interval / 1000) #example
+        self.agent.move(self.agent.v, 0, self.interval / 1000) #example
         #self.set_widgets()
         self.board.delete("all")
         self.set_opponents()
+        self.set_agent()
         self.after(self.interval, self.update_widgets)

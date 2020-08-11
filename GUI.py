@@ -57,8 +57,6 @@ class GUI(tk.Tk):
         #self.button.pack()
         
     def update_widgets(self):
-        self.opps.move(self.interval / 1000) #example
-        self.agent.move(self.agent.v, 0, self.interval / 1000) #example
         #self.set_widgets()
         self.board.delete("all")
         self.set_opponents()

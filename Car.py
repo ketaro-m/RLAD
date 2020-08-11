@@ -5,10 +5,10 @@ class Car:
     Y_MAX = 15    
     
     def __init__(self, x, y, theta, v):
-        self.x = x
-        self.y = y
-        self.theta = theta
-        self.v = v
+        self.x = x # m
+        self.y = y # m
+        self.theta = theta # rad 
+        self.v = v # m/s
         
     def setV(self, v):
         self.v = v
@@ -24,21 +24,29 @@ class Car:
         return (self.x, self.y)
     
 class Agent(Car):
-    def __init__(self, x, y, theta, v):
+    MAX_SPEED = 5.0 # m/s^2
+    MAX_OMEGA = 1.0 # rad/s^2
+
+    def __init__(self, x, y, theta=np.pi/2, v=MAX_SPEED/2, omega=0.0):
         super().__init__(x, y, theta, v)
+        self.omega = omega
         
-    def move(self, v, omega, t):
-        self.v = v
-        dx = np.cos(self.theta + omega * t / 2) * self.v
-        dy = np.sin(self.theta + omega * t / 2) * self.v
+    def move(self, a, alpha, t):
+        omega_mean = np.clip(self.omega + alpha * t / 2, -self.MAX_OMEGA, self.MAX_OMEGA) # average of omega in this time span
+        self.omega = np.clip(self.omega + alpha * t, -self.MAX_OMEGA, self.MAX_OMEGA)
+        theta_mean = self.theta + omega_mean * t / 2
+        self.theta = self.theta + omega_mean * t
+        v_mean = np.clip(self.v + a * t / 2, 0, self.MAX_SPEED)
+        self.v = np.clip(self.v + a * t, 0, self.MAX_SPEED)
+        dx = np.cos(theta_mean) * v_mean
+        dy = np.sin(theta_mean) * v_mean
         self.x += dx * t
         self.y += dy * t
-        self.theta += omega * t
         
 class Opponent(Car):
-    MAX_SPEED = 5
-    ACCELERATION = 5
-    OMEGA = np.pi * 2 / 3
+    MAX_SPEED = 1.5
+    ACCELERATION = 1.5
+    OMEGA = np.pi / 3
     
     def __init__(self, x, y, theta, v):
         super().__init__(x, y, theta, v)

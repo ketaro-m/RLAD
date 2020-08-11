@@ -10,7 +10,7 @@ def run(agent, opps, interval):
     time.sleep(2)
     while(flag):
         opps.move(interval / 1000) #example
-        agent.move(agent.v, 0, interval / 1000) #example
+        agent.move(np.random.randn() * 5, np.random.randn() / 2, interval / 1000) #example
         time.sleep(interval / 1000)
     print("finish")
 

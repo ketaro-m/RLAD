@@ -26,10 +26,16 @@ class GUI(tk.Tk):
     def set_widgets(self):
         ### road ###
         self.board = tk.Canvas(self, width=600, height=930, bg="white")
+        self.board.place(x=0, y=30)
+        self.set_goal()
         self.set_opponents()
         self.set_agent()
-        self.board.place(x=0, y=30)
         #self.board.pack()
+
+    def set_goal(self):
+        self.board.create_rectangle(280, 0, 320, 40, fill="red")
+        self.board.create_text(300, 20, text="GOAL", font=("Arial", 10, "bold"), fill="yellow")
+        
         
     def set_opponents(self):
         global tkimgs
@@ -57,8 +63,8 @@ class GUI(tk.Tk):
         #self.button.pack()
         
     def update_widgets(self):
-        #self.set_widgets()
         self.board.delete("all")
+        self.set_goal()
         self.set_opponents()
         self.set_agent()
         self.after(self.interval, self.update_widgets)

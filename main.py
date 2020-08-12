@@ -8,7 +8,7 @@ from GUI import GUI
 
 def run(agent, opps, interval):
     time.sleep(2)
-    while(flag):
+    while(flag and agent.inField()):
         opps.move(interval / 1000) #example
         agent.move(np.random.randn() * 5, np.random.randn() / 2, interval / 1000) #example
         see = agent.see(opps)

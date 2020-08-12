@@ -97,6 +97,9 @@ class Agent(Car):
         self.opps = sorted(self.opps, key=lambda o: self.relPosition(o)[1], reverse=True)
         return self.opps
 
+    def inField(self):
+        return (-self.X_MAX <= self.x) and (self.x <= self.X_MAX) and (0 <= self.y) and (self.y <= self.Y_MAX)
+
     
 
 class Opponent(Car):

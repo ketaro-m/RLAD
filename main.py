@@ -11,6 +11,8 @@ def run(agent, opps, interval):
     while(flag):
         opps.move(interval / 1000) #example
         agent.move(np.random.randn() * 5, np.random.randn() / 2, interval / 1000) #example
+        see = agent.see(opps)
+        #print(len(see))
         time.sleep(interval / 1000)
     print("finish")
 

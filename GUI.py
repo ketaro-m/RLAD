@@ -14,6 +14,7 @@ class GUI(tk.Tk):
         self.interval = interval
         
         self.oppImage = Image.open("img/car.png")
+        self.oppImageSeen = Image.open("img/car_seen.png")
         self.agentImage = Image.open("img/agent.png")
         self.set_widgets()
         self.set_button()
@@ -43,7 +44,10 @@ class GUI(tk.Tk):
         for i in range(self.opps.length):
             position = self.opps.get(i).getPosition()
             angle = self.opps.get(i).theta * 180 / np.pi
-            tkimgs.append(ImageTk.PhotoImage(image=self.oppImage.rotate(angle, expand=True, fillcolor="white"), master=self))
+            if (not self.opps.get(i).seen):
+                tkimgs.append(ImageTk.PhotoImage(image=self.oppImage.rotate(angle, expand=True, fillcolor="white"), master=self))
+            else:  
+                tkimgs.append(ImageTk.PhotoImage(image=self.oppImageSeen.rotate(angle, expand=True, fillcolor="white"), master=self))
             #print("opponent "+str(i),", positoin "+str(position), ", angle "+str(angle))
             #print((int(position[0] * 60), int(position[1] * 60)))
             self.board.create_image(int(position[0] * 60 + 300), 900 - int(position[1] * 60), image=tkimgs[i])

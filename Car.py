@@ -34,6 +34,9 @@ class Agent(Car):
         super().__init__(x, y, theta, v)
         self.omega = omega
         self.opps = []
+
+    def getState(self):
+        return [self.x, self.y, self.theta, self.v, self.omega]
         
     def move(self, a, alpha, t):
         omega_mean = np.clip(self.omega + alpha * t / 2, -self.MAX_OMEGA, self.MAX_OMEGA) # average of omega in this time span
@@ -61,7 +64,15 @@ class Agent(Car):
             theta = np.arctan2(y, x)
         
         theta = withinPi(theta - self.theta)
-        return (r, theta)
+        return [r, theta]
+
+    # Return the opponent's relative velocity (dir, speed) to this agent
+    def relVelocity(self, opponent):
+        phi = opponent.theta - self.theta
+        phi = withinPi(phi)
+        speed = np.sqrt((opponent.v * np.cos(phi) + self.v)**2 + (opponent.v * np.sin(phi))**2)
+        return [phi, speed]
+
 
     # Judge if the opponent is within this agent's viewing range
     def inRange(self, opponent):
@@ -95,7 +106,7 @@ class Agent(Car):
         self.opps = self.opps[0:self.MAX_OPPS]
         # sort the opponents left to right
         self.opps = sorted(self.opps, key=lambda o: self.relPosition(o)[1], reverse=True)
-        return self.opps
+        return [self.relPosition(o) + self.relVelocity(o) for o in self.opps]
 
     def inField(self):
         return (-self.X_MAX <= self.x) and (self.x <= self.X_MAX) and (0 <= self.y) and (self.y <= self.Y_MAX)

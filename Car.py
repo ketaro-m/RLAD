@@ -3,7 +3,8 @@ import copy
 
 class Car:
     X_MAX = 5
-    Y_MAX = 15    
+    Y_MAX = 15
+    SIZE = 0.5 # size [m]
     
     def __init__(self, x, y, theta, v):
         self.x = x # m
@@ -110,6 +111,22 @@ class Agent(Car):
 
     def inField(self):
         return (-self.X_MAX <= self.x) and (self.x <= self.X_MAX) and (0 <= self.y) and (self.y <= self.Y_MAX)
+
+    # true iff this agent crash with the opponents
+    def crash(self, Opps):
+        safty_distance = 0.2 # need to be set
+
+        for o in Opps.list:
+            x = o.x - self.x
+            y = o.y - self.y
+            r = np.sqrt(x ** 2 + y ** 2)
+            if (r < self.SIZE/2 + Opponent.SIZE/2 + safty_distance):
+                return True
+        return False
+
+    # true iff this agent reach the goal
+    def goal(self):
+        return (abs(self.x) < 0.5) and (self.y > self.Y_MAX - 0.5)
 
     
 

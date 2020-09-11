@@ -249,33 +249,22 @@ if __name__ == "__main__":
         env.display(interval)
 
 
-    def train():
-        time.sleep(2)
-        scores= dqn()
-
-        #plot the scores
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        plt.plot(np.arange(len(scores)),scores)
-        plt.ylabel('Score')
-        plt.xlabel('Epsiode #')
-        plt.show()
-
-
-
     if (show):
-        runThread = threading.Thread(target=train)
         displayThread = threading.Thread(target=display, args=(env,interval))
-
 
         flag = True
         try:
-            runThread.start()
             displayThread.start()
-            print("thread started")
-            runThread.join()
-            displayThread.join()
         except KeyboardInterrupt:
             flag = False
-    else:
-        train()
+    
+    time.sleep(2)
+    scores = dqn()
+
+    #plot the scores
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.plot(np.arange(len(scores)),scores)
+    plt.ylabel('Score')
+    plt.xlabel('Epsiode #')
+    plt.show()

@@ -137,6 +137,9 @@ class Agent(Car):
     def goal(self):
         return (abs(self.x) < 0.5) and (self.y > self.Y_MAX - 0.5)
 
+    def dist2goal(self):
+        return np.sqrt(self.x ** 2 + (self.y - self.Y_MAX) ** 2)
+
     
 
 class Opponent(Car):

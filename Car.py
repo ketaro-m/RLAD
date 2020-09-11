@@ -3,7 +3,8 @@ import copy
 
 class Car:
     X_MAX = 5
-    Y_MAX = 15    
+    Y_MAX = 15
+    SIZE = 0.5 # size [m]
     
     def __init__(self, x, y, theta, v):
         self.x = x # m
@@ -34,12 +35,24 @@ class Agent(Car):
         super().__init__(x, y, theta, v)
         self.omega = omega
         self.opps = []
+
+    def reset(self):
+        self.setPosition((0, 0))
+        self.setTheta(np.pi / 2)
+        self.setV(self.MAX_SPEED/2)
+        self.setOmega(0.0)
+
+    def setOmega(self, omega):
+        self.omega = omega
+
+    def getState(self):
+        return [self.x, self.y, self.theta, self.v, self.omega]
         
     def move(self, a, alpha, t):
         omega_mean = np.clip(self.omega + alpha * t / 2, -self.MAX_OMEGA, self.MAX_OMEGA) # average of omega in this time span
         self.omega = np.clip(self.omega + alpha * t, -self.MAX_OMEGA, self.MAX_OMEGA)
         theta_mean = self.theta + omega_mean * t / 2
-        self.setTheta(self.theta + omega_mean * t) # -pi<theta<=pi
+        self.setTheta(np.clip(self.theta + omega_mean * t, 0, np.pi)) # 0<theta<=pi not allowing the agent to face backward
         v_mean = np.clip(self.v + a * t / 2, 0, self.MAX_SPEED)
         self.v = np.clip(self.v + a * t, 0, self.MAX_SPEED)
         dx = np.cos(theta_mean) * v_mean
@@ -61,7 +74,15 @@ class Agent(Car):
             theta = np.arctan2(y, x)
         
         theta = withinPi(theta - self.theta)
-        return (r, theta)
+        return [r, theta]
+
+    # Return the opponent's relative velocity (dir, speed) to this agent
+    def relVelocity(self, opponent):
+        phi = opponent.theta - self.theta
+        phi = withinPi(phi)
+        speed = np.sqrt((opponent.v * np.cos(phi) + self.v)**2 + (opponent.v * np.sin(phi))**2)
+        return [phi, speed]
+
 
     # Judge if the opponent is within this agent's viewing range
     def inRange(self, opponent):
@@ -95,10 +116,26 @@ class Agent(Car):
         self.opps = self.opps[0:self.MAX_OPPS]
         # sort the opponents left to right
         self.opps = sorted(self.opps, key=lambda o: self.relPosition(o)[1], reverse=True)
-        return self.opps
+        return [self.relPosition(o) + self.relVelocity(o) for o in self.opps]
 
     def inField(self):
         return (-self.X_MAX <= self.x) and (self.x <= self.X_MAX) and (0 <= self.y) and (self.y <= self.Y_MAX)
+
+    # true iff this agent crash with the opponents
+    def crash(self, Opps):
+        safty_distance = 0.2 # need to be set
+
+        for o in Opps.list:
+            x = o.x - self.x
+            y = o.y - self.y
+            r = np.sqrt(x ** 2 + y ** 2)
+            if (r < self.SIZE/2 + Opponent.SIZE/2 + safty_distance):
+                return True
+        return False
+
+    # true iff this agent reach the goal
+    def goal(self):
+        return (abs(self.x) < 0.5) and (self.y > self.Y_MAX - 0.5)
 
     
 
@@ -145,6 +182,16 @@ class Opponents():
             theta = np.pi * np.random.rand()
             v = np.random.random() * Opponent.MAX_SPEED
             self.list.append(Opponent(x, y, theta, v))
+
+    def reset(self):
+        for opp in self.list:
+            x = (np.random.random() * 2 - 1) * Car.X_MAX
+            y = (np.random.random() * 2 + 1) * Car.Y_MAX / 3
+            theta = np.pi * np.random.rand()
+            v = np.random.random() * Opponent.MAX_SPEED
+            opp.setPosition((x, y))
+            opp.setTheta(theta)
+            opp.setV(v)
             
     def getPositions(self):
         return [opp.getPosition() for opp in self.list]

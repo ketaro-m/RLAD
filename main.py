@@ -8,11 +8,21 @@ from GUI import GUI
 
 def run(agent, opps, interval):
     time.sleep(2)
-    while(flag and agent.inField()):
+    while (flag):
         opps.move(interval / 1000) #example
         agent.move(np.random.randn() * 5, np.random.randn() / 2, interval / 1000) #example
+        #agent.move(0, 0, interval / 1000)
         see = agent.see(opps)
         #print(len(see))
+        if (agent.goal()):
+            print("Goal!")
+            break
+        elif (not agent.inField()):
+            print("out of field")
+            break
+        elif (agent.crash(opps)):
+            print("crash")
+            break
         time.sleep(interval / 1000)
     print("finish")
 

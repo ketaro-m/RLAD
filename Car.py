@@ -36,6 +36,15 @@ class Agent(Car):
         self.omega = omega
         self.opps = []
 
+    def reset(self):
+        self.setPosition((0, 0))
+        self.setTheta(np.pi / 2)
+        self.setV(self.MAX_SPEED/2)
+        self.setOmega(0.0)
+
+    def setOmega(self, omega):
+        self.omega = omega
+
     def getState(self):
         return [self.x, self.y, self.theta, self.v, self.omega]
         
@@ -43,7 +52,7 @@ class Agent(Car):
         omega_mean = np.clip(self.omega + alpha * t / 2, -self.MAX_OMEGA, self.MAX_OMEGA) # average of omega in this time span
         self.omega = np.clip(self.omega + alpha * t, -self.MAX_OMEGA, self.MAX_OMEGA)
         theta_mean = self.theta + omega_mean * t / 2
-        self.setTheta(self.theta + omega_mean * t) # -pi<theta<=pi
+        self.setTheta(np.clip(self.theta + omega_mean * t, 0, np.pi)) # 0<theta<=pi not allowing the agent to face backward
         v_mean = np.clip(self.v + a * t / 2, 0, self.MAX_SPEED)
         self.v = np.clip(self.v + a * t, 0, self.MAX_SPEED)
         dx = np.cos(theta_mean) * v_mean
@@ -173,6 +182,16 @@ class Opponents():
             theta = np.pi * np.random.rand()
             v = np.random.random() * Opponent.MAX_SPEED
             self.list.append(Opponent(x, y, theta, v))
+
+    def reset(self):
+        for opp in self.list:
+            x = (np.random.random() * 2 - 1) * Car.X_MAX
+            y = (np.random.random() * 2 + 1) * Car.Y_MAX / 3
+            theta = np.pi * np.random.rand()
+            v = np.random.random() * Opponent.MAX_SPEED
+            opp.setPosition((x, y))
+            opp.setTheta(theta)
+            opp.setV(v)
             
     def getPositions(self):
         return [opp.getPosition() for opp in self.list]

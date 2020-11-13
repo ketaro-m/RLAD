@@ -15,9 +15,9 @@ import torch.optim as optim
 
 from dqn_model import QNet
 
-BUFFER_SIZE = int(1e5)  #replay buffer size
-BATCH_SIZE = 64         # minibatch size
-GAMMA = 0.99            # discount factor
+BUFFER_SIZE = int(1e5)  # replay buffer size
+BATCH_SIZE = 64         # minibatch size, or how many samples taken the replay buffer for experience replay
+GAMMA = 0.995            # discount factor
 TAU = 1e-3              # for soft update of target parameters
 LR = 5e-4               # learning rate
 UPDATE_EVERY = 4        # how often to update the network
@@ -100,7 +100,11 @@ class DQNAgent():
         criterion = torch.nn.MSELoss()
         self.qnetwork_local.train()
         self.qnetwork_target.eval()
-        #shape of output from the model (batch_size,action_dim) = (64,4)
+
+        # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+        # columns of actions taken. These are the actions which would've been taken
+        # for each batch state according to qnetwork_local
+        # size(predicted_targets) = (batch_size, 1) 
         predicted_targets = self.qnetwork_local(states).gather(1,actions)
 
         with torch.no_grad():
@@ -181,12 +185,14 @@ class ReplayBuffer():
 if __name__ == "__main__":
     args = sys.argv
     numOpps = int(args[1])
-    interval = int(args[2]) # interval to update the actions
+    interval = int(args[2]) # interval to update the actions [ms]
+    SOLVED_NUM = 750 / interval # ideal step number to achieve goal, depending on intervel
+    SOLVED_SCORE = 1.0 * (GAMMA ** SOLVED_NUM) # judge if this network has been trained enough
 
-    show = False
+    show_flag = [False, False] # flag for displaying [(show or not), (thread started or not)]
     if (len(args) > 3):
         if (args[3] == "--display"):
-            show = True
+            show_flag[0] = True
 
 
     dqn_agent = DQNAgent(state_size = 5 + 4 * Agent.MAX_OPPS, action_size=11*11, seed = 0)
@@ -195,7 +201,7 @@ if __name__ == "__main__":
     env.reset()
 
 
-    def dqn(n_episodes= 200, max_t = 1000, eps_start=1.0, eps_end = 0.01, eps_decay=0.996):
+    def dqn(n_episodes= 2000, max_t = 1000, eps_start=1.0, eps_end = 0.01, eps_decay=0.996):
         """Deep Q-Learning
         
         Params
@@ -209,13 +215,28 @@ if __name__ == "__main__":
         """
         scores = [] # list containing score from each episode
         scores_window = deque(maxlen=100) # last 100 scores
+        step_window = deque(maxlen=100) # last 100 how many steps to be taken to goal
         eps = eps_start
         for i_episode in range(1, n_episodes+1):
+
+            # show the simulator display last some episodes
+            if (i_episode > n_episodes * 0.9):
+                show_flag[0] = True
+            if (show_flag[0] and (not show_flag[1])):
+                displayThread = threading.Thread(target=display, args=(env,interval))
+                key_flag = True
+                show_flag[1] = True
+                try:
+                    displayThread.start()
+                except KeyboardInterrupt:
+                    key_flag = False
+
             state = env.reset()
             score = 0
+            done = False
             for t in range(max_t):
                 action = dqn_agent.act(state, eps)
-                next_state,reward,done = env.step(action)
+                next_state,reward,done,goal_flag = env.step(action)
                 dqn_agent.step(state,action,reward,next_state,done)
                 ## above step decides whether we will train(learn) the network
                 ## actor (local_qnetwork) or we will fill the replay buffer
@@ -223,24 +244,27 @@ if __name__ == "__main__":
                 ## train the network or otherwise we will add experience tuple in our 
                 ## replay buffer.
                 state = next_state
-                score += reward
+                score += reward * (GAMMA ** t)
                 if done:
                     break
-                scores_window.append(score) ## save the most recent score
-                scores.append(score) ## save the score
-                eps = max(eps*eps_decay,eps_end)## decrease the epsilon
-                print('\rEpisode {}\tAverage Score {:.2f}'.format(i_episode,np.mean(scores_window)), end="")
-                if i_episode %100==0:
-                    print('\rEpisode {}\tAverage Score {:.2f}'.format(i_episode,np.mean(scores_window)))
-                    
-                if np.mean(scores_window)>=200.0:
-                    print('\nEnvironment solve in {:d} epsiodes!\tAverage score: {:.2f}'.format(i_episode-100,
-                                                                                            np.mean(scores_window)))
-                    torch.save(dqn_agent.qnetwork_local.state_dict(),'checkpoint.pth')
-                    break
-
-                if (show):
+                if (show_flag[0]):
                     time.sleep(interval / 1000)
+            scores_window.append(score) ## save the most recent score
+            scores.append(score) ## save the score
+            if (goal_flag):
+                step_window.append(t)
+            print('\rEpisode {}\t Epsilon {:.2f}\tScore {:.2f}\t@ {:0=3}'.format(i_episode,eps,score,t), end="")
+            if i_episode %100==0:
+                sys.stdout.write("\033[2K\033[G")
+                sys.stdout.flush()
+                print('\rEpisode {}\t Average Score {:.4f} \tAgerage Step {:.2f}'.format(i_episode,np.mean(scores_window), np.mean(step_window)))
+                
+            if np.mean(scores_window)>=SOLVED_SCORE:
+                print('\nEnvironment solve in {:d} epsiodes!\tAverage score: {:.2f}'.format(i_episode-100,np.mean(scores_window)))
+                torch.save(dqn_agent.qnetwork_local.state_dict(),'checkpoint.pth')
+                break
+            eps = max(eps*eps_decay,eps_end)## decrease the epsilon
+
                     
         return scores
 
@@ -249,14 +273,6 @@ if __name__ == "__main__":
         env.display(interval)
 
 
-    if (show):
-        displayThread = threading.Thread(target=display, args=(env,interval))
-
-        flag = True
-        try:
-            displayThread.start()
-        except KeyboardInterrupt:
-            flag = False
     
     time.sleep(2)
     scores = dqn()

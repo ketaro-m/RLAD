@@ -89,7 +89,8 @@ class Agent(Car):
         psi = self.relPosition(opponent)[1]
         return (- self.VIEW_ANGLE <= psi) and (psi <= self.VIEW_ANGLE)
     
-    # Return list of opponents the agent can see
+    # Update self.opps, the list of opponents that the agent can see,
+    # and return the list of the opponents-relative-state list [[x, y, theta, v], ...]  
     def see(self, Opps):
         self.opps = []
         Opps.notSeen()

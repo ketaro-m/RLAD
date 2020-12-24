@@ -44,14 +44,26 @@ class Env():
             state += list(o)
         obs = np.array(state)
 
+        reward = self.reward_function()
+
+        done = self.agent.goal() or self.agent.crash(self.opps) or (not self.agent.inField())
+        flag = self.agent.goal() # flag just for debug
+        
+        return (obs, reward, done, flag)
+
+    # define reward
+    def reward_function(self):
         # just goal or not
         if (self.agent.goal()):
             reward = 1.0
+        elif (self.agent.crash(self.opps) or (not self.agent.inField())):
+            reward = -1.0
         else:
             reward = 0.0
+            #reward = 1 / self.agent.dist2goal()
+        
+        return reward
 
-        done = self.agent.goal() or self.agent.crash(self.opps) or (not self.agent.inField()) 
-        return (obs, reward, done)
 
 
 
@@ -65,7 +77,7 @@ def display(env, interval):
 def run(interval):
     time.sleep(2)
     for i in range(121):
-        obs, reward, done = env.step(action=115)
+        obs, reward, done, flag = env.step(action=115)
         #print(obs, reward, done)
         if (done):
             print("done")

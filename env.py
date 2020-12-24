@@ -77,7 +77,7 @@ def display(env, interval):
 def run(interval):
     time.sleep(2)
     for i in range(121):
-        obs, reward, done = env.step(action=115)
+        obs, reward, done, flag = env.step(action=115)
         #print(obs, reward, done)
         if (done):
             print("done")

@@ -3,10 +3,12 @@ import tkinter as tk
 from PIL import Image, ImageTk
 
 class GUI(tk.Tk):
+    WIDTH = 500
+    HIGHT = 1000
     def __init__(self, agent, opponents, interval):
         super(GUI, self).__init__()
         self.title("simulator")
-        self.geometry("{}x{}+{}+{}".format(600, 930, 100, 50))
+        self.geometry("{}x{}+{}+{}".format(self.WIDTH, self.HIGHT, 100, 50))
         self.resizable(width=0, height=0)
         
         self.agent = agent
@@ -17,7 +19,7 @@ class GUI(tk.Tk):
         self.oppImageSeen = Image.open("img/car_seen.png")
         self.agentImage = Image.open("img/agent.png")
         self.set_widgets()
-        self.set_button()
+        # self.set_button()
         
 
     def run(self):
@@ -26,16 +28,17 @@ class GUI(tk.Tk):
         
     def set_widgets(self):
         ### road ###
-        self.board = tk.Canvas(self, width=600, height=930, bg="white")
-        self.board.place(x=0, y=30)
+        self.board = tk.Canvas(self, width=self.WIDTH, height=self.HIGHT, bg="white")
+        self.board.place(x=0, y=0)
         self.set_goal()
         self.set_opponents()
         self.set_agent()
         #self.board.pack()
 
     def set_goal(self):
-        self.board.create_rectangle(280, 0, 320, 40, fill="red")
-        self.board.create_text(300, 20, text="GOAL", font=("Arial", 10, "bold"), fill="yellow")
+        self.board.create_rectangle(self.WIDTH/2+self.WIDTH/10*self.agent.GOAL[0], self.HIGHT-self.WIDTH*3/2-40, self.WIDTH/2+self.WIDTH/10*self.agent.GOAL[1], self.HIGHT-self.WIDTH*3/2, fill="red")
+        self.board.create_text(self.WIDTH/2, self.HIGHT-self.WIDTH*3/2-20, text="GOAL", font=("Arial", 10, "bold"), fill="yellow")
+        self.board.create_line(0, self.HIGHT-self.WIDTH*3/2, self.WIDTH, self.HIGHT-self.WIDTH*3/2, fill='red')
         
         
     def set_opponents(self):
@@ -50,7 +53,7 @@ class GUI(tk.Tk):
                 tkimgs.append(ImageTk.PhotoImage(image=self.oppImageSeen.rotate(angle, expand=True, fillcolor="white"), master=self))
             #print("opponent "+str(i),", positoin "+str(position), ", angle "+str(angle))
             #print((int(position[0] * 60), int(position[1] * 60)))
-            self.board.create_image(int(position[0] * 60 + 300), 900 - int(position[1] * 60), image=tkimgs[i])
+            self.board.create_image(int(position[0] * self.WIDTH/10 + self.WIDTH/2), self.HIGHT - int(position[1] * self.WIDTH/10), image=tkimgs[i])
             
     def set_agent(self):
         global tkimg
@@ -58,7 +61,7 @@ class GUI(tk.Tk):
         angle = self.agent.theta * 180 / np.pi
         tkimg = ImageTk.PhotoImage(image=self.agentImage.rotate(angle, expand=True, fillcolor="white"), master=self)
         #print("agent", ", position "+str(position), ", angle "+str(angle))
-        self.board.create_image(int(position[0] * 60 + 300), 900 - int(position[1] * 60), image=tkimg)
+        self.board.create_image(int(position[0] * self.WIDTH/10 + self.WIDTH/2), self.HIGHT - int(position[1] * self.WIDTH/10), image=tkimg)
             
             
     def set_button(self):

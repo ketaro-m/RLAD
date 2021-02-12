@@ -2,6 +2,7 @@ import sys
 import matplotlib.pyplot as plt
 import threading
 import time
+import datetime
 
 import numpy as np
 import random
@@ -187,7 +188,7 @@ if __name__ == "__main__":
     numOpps = int(args[1])
     interval = int(args[2]) # interval to update the actions [ms]
     SOLVED_NUM = 750 / interval # ideal step number to achieve goal, depending on intervel
-    SOLVED_SCORE = 1.0 * (GAMMA ** SOLVED_NUM) # judge if this network has been trained enough
+    SOLVED_SCORE = 10.0 * (GAMMA ** SOLVED_NUM) # judge if this network has been trained enough
 
     show_flag = [False, False] # flag for displaying [(show or not), (thread started or not)]
     if (len(args) > 3):
@@ -201,7 +202,7 @@ if __name__ == "__main__":
     env.reset()
 
 
-    def dqn(n_episodes= 2000, max_t = 1000, eps_start=1.0, eps_end = 0.01, eps_decay=0.996):
+    def dqn(n_episodes= 50000, max_t = 1000, eps_start=1.0, eps_end = 0.01, eps_decay=0.999):
         """Deep Q-Learning
         
         Params
@@ -220,7 +221,7 @@ if __name__ == "__main__":
         for i_episode in range(1, n_episodes+1):
 
             # show the simulator display last some episodes
-            if (i_episode > n_episodes * 0.9):
+            if (i_episode > n_episodes - 50):
                 show_flag[0] = True
             if (show_flag[0] and (not show_flag[1])):
                 displayThread = threading.Thread(target=display, args=(env,interval))
@@ -261,12 +262,14 @@ if __name__ == "__main__":
                 
             if np.mean(scores_window)>=SOLVED_SCORE:
                 print('\nEnvironment solve in {:d} epsiodes!\tAverage score: {:.2f}'.format(i_episode-100,np.mean(scores_window)))
-                torch.save(dqn_agent.qnetwork_local.state_dict(),'checkpoint.pth')
+                torch.save(dqn_agent.qnetwork_local.state_dict(),'./params/checkpoint.pth')
                 break
             eps = max(eps*eps_decay,eps_end)## decrease the epsilon
 
-                    
-        return scores
+
+        date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
+        torch.save(dqn_agent.qnetwork_local.state_dict(), "./params/model_"+date+"_"+str(numOpps)+"_"+str(interval)+".pth")
+        return scores, date
 
 
     def display(env, interval):
@@ -275,12 +278,13 @@ if __name__ == "__main__":
 
     
     time.sleep(2)
-    scores = dqn()
+    scores, date = dqn()
 
     #plot the scores
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    plt.figure()
     plt.plot(np.arange(len(scores)),scores)
     plt.ylabel('Score')
     plt.xlabel('Epsiode #')
+    plt.savefig('fig/score_'+date+'.png')
     plt.show()
+    plt.clf()

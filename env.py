@@ -55,7 +55,7 @@ class Env():
     def reward_function(self):
         # just goal or not
         if (self.agent.goal()):
-            reward = 10.0
+            reward = 1.0
         elif (self.agent.crash(self.opps) or (not self.agent.inField())):
             reward = -1.0
         else:

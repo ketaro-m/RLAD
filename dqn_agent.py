@@ -188,7 +188,7 @@ if __name__ == "__main__":
     numOpps = int(args[1])
     interval = int(args[2]) # interval to update the actions [ms]
     SOLVED_NUM = 750 / interval # ideal step number to achieve goal, depending on intervel
-    SOLVED_SCORE = 10.0 * (GAMMA ** SOLVED_NUM) # judge if this network has been trained enough
+    SOLVED_SCORE = 1.0 * (GAMMA ** SOLVED_NUM) # judge if this network has been trained enough
 
     show_flag = [False, False] # flag for displaying [(show or not), (thread started or not)]
     if (len(args) > 3):

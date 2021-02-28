@@ -30,9 +30,10 @@ class Car:
     
 class Agent(Car):
     MAX_SPEED = 5.0 # m/s^2
-    MIN_SPEED = 0.5 # m/s^2
+    MIN_SPEED = 0.25 # m/s^2
     MAX_OMEGA = 1.0 # rad/s^2
-    THETA_RANGE = (np.pi/3, np.pi*2/3)
+    THETA_RANGE = (np.pi/6, np.pi*5/6)
+    # THETA_RANGE = (0, np.pi)
     MAX_OPPS = 5 # maximum number the agent can recognize
     VIEW_ANGLE = np.pi / 3 #viewing angle of this agent
     GOAL = (-3.0, 3.0) # x-axis of the goal
@@ -149,7 +150,7 @@ class Agent(Car):
 
 class Opponent(Car):
     Y_MAX = 20
-    MAX_SPEED = 3
+    MAX_SPEED = 1.5
     THETA_RANGE = (np.pi/3, np.pi*2/3)
     ACCELERATION = 1.5
     OMEGA = np.pi / 3
@@ -215,6 +216,7 @@ class Opponents():
             i.move(t)
             if not i.inField():
                 self.list.remove(i)
+                # self.length -= 1
                 x = (np.random.random() * 2 - 1) * Opponent.X_MAX
                 y = Opponent.Y_MAX
                 theta = np.pi * np.random.rand()

@@ -54,6 +54,10 @@ class Agent(Car):
 
     def getState(self):
         return [self.x, self.y, self.theta, self.v, self.omega]
+
+    # change theta range
+    def setThetaRange(self, theta_range: tuple):
+        self.THETA_RANGE = theta_range
         
     def move(self, a, alpha, t):
         omega_mean = np.clip(self.omega + alpha * t / 2, -self.MAX_OMEGA, self.MAX_OMEGA) # average of omega in this time span
@@ -101,6 +105,8 @@ class Agent(Car):
     def see(self, Opps):
         self.opps = []
         Opps.notSeen()
+        # filter if the opp is in field
+        tmp = [o for o in Opps.list if o.inField]
         # filter if the agent can view
         tmp = list(filter(self.inRange, Opps.list))
         # sort the opponents near to far
@@ -160,6 +166,15 @@ class Opponent(Car):
         super().__init__(x, y, theta, v)
         self.seen = False # if it's seen by the agent
     
+    # reset its position
+    def reset(self):
+        x = (np.random.random() * 2 - 1) * self.X_MAX
+        y = np.random.uniform(1/3, 1) * self.Y_MAX
+        theta = np.pi * np.random.rand()
+        v = np.random.random() * self.MAX_SPEED
+        self.setPosition((x, y))
+        self.setTheta(theta)
+        self.setV(v)
         
     def move(self, t):
         self.x -= np.cos(self.theta) * self.v * t
@@ -186,24 +201,18 @@ class Opponent(Car):
 class Opponents():
     def __init__(self, n):
         self.list = []
-        self.length = n
-        for i in range(n):
-            x = (np.random.random() * 2 - 1) * Opponent.X_MAX
-            # y = (np.random.random() * 2 + 1) * Car.Y_MAX / 3
-            y = np.random.random() * Opponent.Y_MAX
-            theta = np.pi * np.random.rand()
-            v = np.random.random() * Opponent.MAX_SPEED
-            self.list.append(Opponent(x, y, theta, v))
+        self.num = n
+        for _ in range(n):
+            opp = Opponent(0, 0, 0, 0)
+            opp.reset()
+            self.list.append(opp)
 
     def reset(self):
+        if (len(self.list) < self.num):
+            for i in range(self.num-len(self.list)):
+                self.list.append(Opponent(0, 0, 0, 0))
         for opp in self.list:
-            x = (np.random.random() * 2 - 1) * Opponent.X_MAX
-            y = (np.random.random() * 2 + 1) * Opponent.Y_MAX / 3
-            theta = np.pi * np.random.rand()
-            v = np.random.random() * Opponent.MAX_SPEED
-            opp.setPosition((x, y))
-            opp.setTheta(theta)
-            opp.setV(v)
+            opp.reset()
             
     def getPositions(self):
         return [opp.getPosition() for opp in self.list]
@@ -215,18 +224,40 @@ class Opponents():
         for i in self.list:
             i.move(t)
             if not i.inField():
-                self.list.remove(i)
-                # self.length -= 1
-                x = (np.random.random() * 2 - 1) * Opponent.X_MAX
-                y = Opponent.Y_MAX
-                theta = np.pi * np.random.rand()
-                v = np.random.random() * Opponent.MAX_SPEED
-                self.list.append(Opponent(x, y, theta, v))
+                # restart from randomized but y=Y_MAX point
+                i.reset()
+                i.setPosition((i.x, i.Y_MAX))
 
     # reset all the opponents to not being seen
     def notSeen(self):
         for o in self.list:
             o.seen = False
+
+    # add opponents
+    def add(self, num: int):
+        self.num += num
+        for _ in range(num):
+            opp = Opponent(0, 0, 0, 0)
+            opp.reset()
+            self.list.append(opp)
+
+    # delete opponents
+    def delete(self, num: int):
+        num = min(num, self.num) # not to make self.num negative
+        self.num -= num
+        for _ in range(num):
+            del self.list[-1]
+
+    # change opponents' num
+    def setNum(self, num: int):
+        diff = num - self.num
+        if diff == 0:
+            return
+        elif diff > 0:
+            self.add(diff)
+        else:
+            self.delete(-diff)
+        
 
 
 # Function changing theta from -pi to pi (-pi<theta<=pi)

@@ -8,7 +8,6 @@ import time
 class Env():
 
     def __init__(self, numOpps, interval=50, action_size=(11, 11), action_range=(5, 1)):
-        self.numOpps = numOpps
         self.agent = Agent(0, 0)
         self.opps = Opponents(numOpps)
         self.interval = interval
@@ -31,6 +30,10 @@ class Env():
             state += list(o)
         state = np.array(state)
         return state
+
+    # change the number of opps
+    def change_opps(self, numOpps: int):
+        self.opps.setNum(numOpps)
 
     def step(self, action):
         a = self.action_bin[0] * (int(action / self.action_size[1]) + 1 - (self.action_size[0] + 1) / 2)

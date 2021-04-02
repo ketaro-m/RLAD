@@ -44,7 +44,10 @@ class GUI(tk.Tk):
     def set_opponents(self):
         global tkimgs
         tkimgs = []
-        for i in range(self.opps.length):
+        for i in range(len(self.opps.list)):
+            # this judgement is needed because len(self.opps.list) might change during this loop
+            if (i >= len(self.opps.list)):
+                break
             position = self.opps.get(i).getPosition()
             angle = self.opps.get(i).theta * 180 / np.pi
             if (not self.opps.get(i).seen):

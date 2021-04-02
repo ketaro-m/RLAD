@@ -185,24 +185,25 @@ class ReplayBuffer():
 # training
 if __name__ == "__main__":
     args = sys.argv
-    numOpps = int(args[1])
-    interval = int(args[2]) # interval to update the actions [ms]
+    numOpps = 6 # how many opponents
+    interval = 50 # interval to update the actions [ms]
     SOLVED_NUM = 750 / interval # ideal step number to achieve goal, depending on intervel
     SOLVED_SCORE = 1.0 * (GAMMA ** SOLVED_NUM) # judge if this network has been trained enough
 
     show_flag = [False, False] # flag for displaying [(show or not), (thread started or not)]
-    if (len(args) > 3):
-        if (args[3] == "--display"):
+    if (len(args) > 1):
+        if (args[1] == "--display"):
             show_flag[0] = True
 
 
     dqn_agent = DQNAgent(state_size = 5 + 4 * Agent.MAX_OPPS, action_size=11*11, seed = 0)
     global env
-    env = Env(numOpps, interval)
+    env = Env(3, interval) # env = Env(numOpps, interval) starting from 3 fewer opponents
+    # env.agent.setThetaRange((np.pi*2/5, np.pi*(1-2/5))) starting from proceeding almost straight
     env.reset()
 
 
-    def dqn(n_episodes= 50000, max_t = 1000, eps_start=1.0, eps_end = 0.01, eps_decay=0.999):
+    def dqn(n_episodes= 2000, max_t = 1000, eps_start=1.0, eps_end = 0.01, eps_decay=0.999):
         """Deep Q-Learning
         
         Params
@@ -219,9 +220,8 @@ if __name__ == "__main__":
         step_window = deque(maxlen=100) # last 100 how many steps to be taken to goal
         eps = eps_start
         for i_episode in range(1, n_episodes+1):
-
             # show the simulator display last some episodes
-            if (i_episode > n_episodes - 50):
+            if (i_episode > n_episodes - 20):
                 show_flag[0] = True
             if (show_flag[0] and (not show_flag[1])):
                 displayThread = threading.Thread(target=display, args=(env,interval))
@@ -231,6 +231,13 @@ if __name__ == "__main__":
                     displayThread.start()
                 except KeyboardInterrupt:
                     key_flag = False
+
+            if (i_episode == 750):
+                # env.agent.setThetaRange(((np.pi/3, np.pi*2/3)))
+                env.change_opps(5)
+            if (i_episode == 1500):
+                # env.agent.setThetaRange(((np.pi/2, np.pi/2)))
+                env.change_opps(7)
 
             state = env.reset()
             score = 0

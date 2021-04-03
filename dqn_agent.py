@@ -183,6 +183,8 @@ class ReplayBuffer():
 
 
 # training
+# you need to set these variables (numOpps, interval, SOLVED_NUM)
+# and inside dqn() (n_episodes, eps_decay, display_episodes)
 if __name__ == "__main__":
     args = sys.argv
     numOpps = 6 # how many opponents
@@ -190,7 +192,7 @@ if __name__ == "__main__":
     SOLVED_NUM = 750 / interval # ideal step number to achieve goal, depending on intervel
     SOLVED_SCORE = 1.0 * (GAMMA ** SOLVED_NUM) # judge if this network has been trained enough
 
-    show_flag = [False, False] # flag for displaying [(show or not), (thread started or not)]
+    show_flag = [False, True] # flag for displaying [(show or not), (main thread and GUI thread interval are synchronized or not (this is for speed up training but display the simulation))]
     if (len(args) > 1):
         if (args[1] == "--display"):
             show_flag[0] = True
@@ -216,14 +218,17 @@ if __name__ == "__main__":
             
         """
         scores = [] # list containing score from each episode
+        average_scores = [] # average score of each 100 episodes
         scores_window = deque(maxlen=100) # last 100 scores
         step_window = deque(maxlen=100) # last 100 how many steps to be taken to goal
         eps = eps_start
+        display_episodes = [[500, 501], [1000, 1001], [1500, 1505], [1990, 2000]] # when synchronize the interval and show the display ([[start, end], ...])
+        display_index = 0 # index variable you don't have to touch
+
         for i_episode in range(1, n_episodes+1):
-            # show the simulator display last some episodes
-            if (i_episode > n_episodes - 20):
+            # start showing the simulator display at some episodes
+            if (i_episode == display_episodes[0][0]):
                 show_flag[0] = True
-            if (show_flag[0] and (not show_flag[1])):
                 displayThread = threading.Thread(target=display, args=(env,interval))
                 key_flag = True
                 show_flag[1] = True
@@ -231,13 +236,27 @@ if __name__ == "__main__":
                     displayThread.start()
                 except KeyboardInterrupt:
                     key_flag = False
+            # synchronize the interval and show the display
+            if (show_flag[0]):
+                if (i_episode == display_episodes[display_index][0]):
+                    time.sleep(0.25)
+                    show_flag[1] = True
+                    env.gui.set_interval(interval)
+                elif (i_episode == display_episodes[display_index][1]):
+                    show_flag[1] = False
+                    display_index += 1
+                    env.gui.set_interval(20 * 1000) # set proper GUI interval depending on the episodes at which the display is shown
+                elif (i_episode == display_episodes[display_index][0] - 100):
+                    env.gui.set_interval(2 * 1000)
 
-            if (i_episode == 750):
+            # change the env conditions
+            if (i_episode == 1000):
                 # env.agent.setThetaRange(((np.pi/3, np.pi*2/3)))
                 env.change_opps(5)
             if (i_episode == 1500):
                 # env.agent.setThetaRange(((np.pi/2, np.pi/2)))
                 env.change_opps(7)
+
 
             state = env.reset()
             score = 0
@@ -255,7 +274,7 @@ if __name__ == "__main__":
                 score += reward * (GAMMA ** t)
                 if done:
                     break
-                if (show_flag[0]):
+                if (show_flag[0] and show_flag[1]):
                     time.sleep(interval / 1000)
             scores_window.append(score) ## save the most recent score
             scores.append(score) ## save the score
@@ -266,6 +285,7 @@ if __name__ == "__main__":
                 sys.stdout.write("\033[2K\033[G")
                 sys.stdout.flush()
                 print('\rEpisode {}\t Average Score {:.4f} \tAgerage Step {:.2f}'.format(i_episode,np.mean(scores_window), np.mean(step_window)))
+                average_scores.append(np.mean(scores_window))
                 
             if np.mean(scores_window)>=SOLVED_SCORE:
                 print('\nEnvironment solve in {:d} epsiodes!\tAverage score: {:.2f}'.format(i_episode-100,np.mean(scores_window)))
@@ -276,22 +296,24 @@ if __name__ == "__main__":
 
         date = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M")
         torch.save(dqn_agent.qnetwork_local.state_dict(), "./params/model_"+date+"_"+str(numOpps)+"_"+str(interval)+".pth")
-        return scores, date
+        return scores, average_scores, date
 
 
-    def display(env, interval):
-        env.display(interval)
+    def display(environment, interval):
+        environment.display(interval)
 
 
     
     time.sleep(2)
-    scores, date = dqn()
+    scores, average_scores, date = dqn()
 
     #plot the scores
     plt.figure()
     plt.plot(np.arange(len(scores)),scores)
+    plt.plot(np.arange(50, 100*len(average_scores), 100), average_scores)
     plt.ylabel('Score')
     plt.xlabel('Epsiode #')
     plt.savefig('fig/score_'+date+'.png')
+    plt.show()
     plt.show()
     plt.clf()

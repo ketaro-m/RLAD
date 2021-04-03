@@ -23,7 +23,7 @@ class GUI(tk.Tk):
         
 
     def run(self):
-        self.after(2000, self.update_widgets)
+        self.after(250, self.update_widgets)
         self.mainloop()
         
     def set_widgets(self):
@@ -78,3 +78,6 @@ class GUI(tk.Tk):
         self.set_opponents()
         self.set_agent()
         self.after(self.interval, self.update_widgets)
+
+    def set_interval(self, interval):
+        self.interval = interval

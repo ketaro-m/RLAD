@@ -18,8 +18,8 @@ class Env():
         self.action_bin = (aBin, domegaBin)
     
     def display(self, interval):
-        gui = GUI(self.agent, self.opps, interval)
-        gui.run()
+        self.gui = GUI(self.agent, self.opps, interval)
+        self.gui.run()
 
     def reset(self):
         self.agent.reset()

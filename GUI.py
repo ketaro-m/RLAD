@@ -1,19 +1,23 @@
 import numpy as np
 import tkinter as tk
 from PIL import Image, ImageTk
+import copy
 
 class GUI(tk.Tk):
     WIDTH = 500
     HIGHT = 1000
-    def __init__(self, agent, opponents, interval):
+    def __init__(self, env, interval):
         super(GUI, self).__init__()
         self.title("simulator")
         self.geometry("{}x{}+{}+{}".format(self.WIDTH, self.HIGHT, 100, 50))
         self.resizable(width=0, height=0)
         
-        self.agent = agent
-        self.opps = opponents
+        # self.env_copy = copy.deepcopy(env) # copy of env for set_qval
+        self.env = env
+        self.agent = env.agent
+        self.opps = env.opps
         self.interval = interval
+        self.q_values = []
         
         self.oppImage = Image.open("img/car.png")
         self.oppImageSeen = Image.open("img/car_seen.png")
@@ -65,7 +69,23 @@ class GUI(tk.Tk):
         tkimg = ImageTk.PhotoImage(image=self.agentImage.rotate(angle, expand=True, fillcolor="white"), master=self)
         #print("agent", ", position "+str(position), ", angle "+str(angle))
         self.board.create_image(int(position[0] * self.WIDTH/10 + self.WIDTH/2), self.HIGHT - int(position[1] * self.WIDTH/10), image=tkimg)
-            
+
+    def set_qvals(self, q_values):
+        self.q_values = q_values
+
+    # mapping q_value where the agent moves
+    def map_qvals(self):
+        q_values = self.q_values
+        if len(q_values):
+            q_values = (q_values - min(q_values))/(max(q_values) - min(q_values)) # normalization
+        for i in range(len(q_values)):
+            agent_state = self.env.step_dummy(i)
+            q_val = int(q_values[i] * 100)
+            x = int(agent_state[0] * self.WIDTH/10 + self.WIDTH/2)
+            y = int(self.HIGHT - agent_state[1] * self.WIDTH/10)
+            r = 2
+            color = "gray" + str(q_val)
+            self.board.create_oval(x-r, y-r, x+r, y+r, fill=color) 
             
     def set_button(self):
         self.button = tk.Button(self, text="next", bg="gray", command=self.update_widgets)
@@ -77,6 +97,7 @@ class GUI(tk.Tk):
         self.set_goal()
         self.set_opponents()
         self.set_agent()
+        self.map_qvals()
         self.after(self.interval, self.update_widgets)
 
     def set_interval(self, interval):

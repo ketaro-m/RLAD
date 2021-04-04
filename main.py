@@ -13,7 +13,16 @@ def run(env, dqn_agent, interval):
     time.sleep(2)
     state = env.reset()
     while (flag):
-        action = dqn_agent.act(state)
+        action, q_values = dqn_agent.act(state)
+        # comment out this if you don't wanna see the q_value plotting
+        ##
+        env.gui.set_qvals(q_values)
+        a = env.action_bin[0] * (int(action / env.action_size[1]) + 1 - (env.action_size[0] + 1) / 2)
+        d_omega = env.action_bin[1] * (int(action % env.action_size[1]) + 1 - (env.action_size[1] + 1) / 2)
+        print(q_values)
+        print("Action No.{}, Alpha={:.2f}, d_omega={:.2f}, QValue={}".format(action, a, d_omega, q_values[action]))
+        ##
+        
         next_state,reward,done,goal_flag = env.step(action)
         state = next_state
         # env.opps.move(interval / 1000) #example
@@ -31,6 +40,12 @@ def run(env, dqn_agent, interval):
             print("crash")
             break
         time.sleep(interval / 1000)
+        
+        ## comment out this if you don't wanna wait for Enter key to update states
+        hoge = input() # waiting for Enter input
+        if (hoge == 'q'):
+            break
+        ## 
     print("finish")
 
 def display(env, interval):
@@ -44,7 +59,7 @@ def main():
     opps = Opponents(int(args[1]))
     # extract intervals
     runInterval = int(args[2])
-    displayInterval = int(args[3])
+    displayInterval = runInterval
     # 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     dqn_agent = DQNAgent(state_size = 5 + 4 * Agent.MAX_OPPS, action_size=11*11, seed = 0)

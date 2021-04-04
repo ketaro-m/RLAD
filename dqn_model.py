@@ -8,11 +8,11 @@ class QNet(nn.Module):
         self.seed = torch.manual_seed(seed)
         self.fc1 = nn.Linear(state_size, fc1_unit)
         self.fc2 = nn.Linear(fc1_unit, fc2_unit)
-        self.fc3 = nn.Linear(fc2_unit, fc3_unit)
-        self.fc4 = nn.Linear(fc3_unit, action_size)
+        # self.fc3 = nn.Linear(fc2_unit, fc3_unit)
+        self.fc3 = nn.Linear(fc2_unit, action_size)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        return self.fc4(x)
+        # x = F.relu(self.fc3(x))
+        return self.fc3(x)

@@ -18,7 +18,7 @@ class Env():
         self.action_bin = (aBin, domegaBin)
     
     def display(self, interval):
-        self.gui = GUI(self.agent, self.opps, interval)
+        self.gui = GUI(self, interval)
         self.gui.run()
 
     def reset(self):
@@ -53,6 +53,13 @@ class Env():
         flag = self.agent.goal() # flag just for debug
         
         return (obs, reward, done, flag)
+
+    # dummy
+    def step_dummy(self, action):
+        a = self.action_bin[0] * (int(action / self.action_size[1]) + 1 - (self.action_size[0] + 1) / 2)
+        d_omega = self.action_bin[1] * (int(action % self.action_size[1]) + 1 - (self.action_size[1] + 1) / 2)
+        return self.agent.move_dummy(a, d_omega, self.interval / 1000)
+
 
     # define reward
     def reward_function(self):

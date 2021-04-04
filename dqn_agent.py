@@ -85,9 +85,9 @@ class DQNAgent():
 
         #Epsilon -greedy action selction
         if random.random() > eps:
-            return np.argmax(action_values.cpu().data.numpy())
+            return np.argmax(action_values.cpu().data.numpy()), action_values.cpu().data.numpy()[0]
         else:
-            return random.choice(np.arange(self.action_size))
+            return random.choice(np.arange(self.action_size)), action_values.cpu().data.numpy()[0]
             
     def learn(self, experiences, gamma):
         """Update value parameters using given batch of experience tuples.
@@ -245,9 +245,9 @@ if __name__ == "__main__":
                 elif (i_episode == display_episodes[display_index][1]):
                     show_flag[1] = False
                     display_index += 1
-                    env.gui.set_interval(20 * 1000) # set proper GUI interval depending on the episodes at which the display is shown
+                    env.gui.set_interval(1 * 1000) # set proper GUI interval depending on the episodes at which the display is shown
                 elif (i_episode == display_episodes[display_index][0] - 100):
-                    env.gui.set_interval(2 * 1000)
+                    env.gui.set_interval(1 * 1000)
 
             # change the env conditions
             if (i_episode == 1000):
@@ -262,7 +262,11 @@ if __name__ == "__main__":
             score = 0
             done = False
             for t in range(max_t):
-                action = dqn_agent.act(state, eps)
+                action, q_values = dqn_agent.act(state, eps)
+                ## comment out below if you don't wanna see the q_value plotting
+                if (show_flag[0]):
+                    env.gui.set_qvals(q_values)
+                ##
                 next_state,reward,done,goal_flag = env.step(action)
                 dqn_agent.step(state,action,reward,next_state,done)
                 ## above step decides whether we will train(learn) the network

@@ -71,18 +71,24 @@ class Agent(Car):
         self.x += dx * t
         self.y += dy * t
 
-    # agent itself doesn't move but return (x, y, theta, v, omega)
-    def move_dummy(self, a, alpha, t):
-        omega_mean = np.clip(self.omega + alpha * t / 2, -self.MAX_OMEGA, self.MAX_OMEGA) # average of omega in this time span
-        omega = np.clip(self.omega + alpha * t, -self.MAX_OMEGA, self.MAX_OMEGA)
-        theta_mean = self.theta + omega_mean * t / 2
-        theta = withinPi(np.clip(self.theta + omega_mean * t, self.THETA_RANGE[0], self.THETA_RANGE[1])) # not allowing the agent to face backward
-        v_mean = np.clip(self.v + a * t / 2, self.MIN_SPEED, self.MAX_SPEED)
-        v = np.clip(self.v + a * t, self.MIN_SPEED, self.MAX_SPEED)
-        dx = np.cos(theta_mean) * v_mean
-        dy = np.sin(theta_mean) * v_mean
-        x = self.x + dx * t
-        y = self.y + dy * t
+    # agent itself doesn't move but return (x, y, theta, v, omega) after n-steps
+    def move_dummy(self, a, alpha, t, steps=1):
+        x = self.x
+        y = self.y
+        theta = self.theta
+        v = self.v
+        omega = self.omega
+        for _ in range(steps):
+            omega_mean = np.clip(omega + alpha * t / 2, -self.MAX_OMEGA, self.MAX_OMEGA) # average of omega in this time span
+            omega = np.clip(omega + alpha * t, -self.MAX_OMEGA, self.MAX_OMEGA)
+            theta_mean = theta + omega_mean * t / 2
+            theta = withinPi(np.clip(theta + omega_mean * t, self.THETA_RANGE[0], self.THETA_RANGE[1])) # not allowing the agent to face backward
+            v_mean = np.clip(v + a * t / 2, self.MIN_SPEED, self.MAX_SPEED)
+            v = np.clip(v + a * t, self.MIN_SPEED, self.MAX_SPEED)
+            dx = np.cos(theta_mean) * v_mean
+            dy = np.sin(theta_mean) * v_mean
+            x = x + dx * t
+            y = y + dy * t
         return (x, y, theta, v, omega)
 
     # Return the opponent's relative position to this agent 
@@ -184,7 +190,7 @@ class Opponent(Car):
     def reset(self):
         x = (np.random.random() * 2 - 1) * self.X_MAX
         y = np.random.uniform(1/3, 1) * self.Y_MAX
-        theta = np.pi * np.random.rand()
+        theta = np.clip(np.pi * np.random.rand(), self.THETA_RANGE[0], self.THETA_RANGE[1])
         v = np.random.random() * self.MAX_SPEED
         self.setPosition((x, y))
         self.setTheta(theta)

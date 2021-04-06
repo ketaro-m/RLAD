@@ -18,6 +18,9 @@ class GUI(tk.Tk):
         self.opps = env.opps
         self.interval = interval
         self.q_values = []
+        self.action = 0 # the action index number the agent takes
+        self.qmap = [] # list to contain q_value map
+        self.qmap_update = False # flag if update q_value mapping or not
         
         self.oppImage = Image.open("img/car.png")
         self.oppImageSeen = Image.open("img/car_seen.png")
@@ -70,22 +73,48 @@ class GUI(tk.Tk):
         #print("agent", ", position "+str(position), ", angle "+str(angle))
         self.board.create_image(int(position[0] * self.WIDTH/10 + self.WIDTH/2), self.HIGHT - int(position[1] * self.WIDTH/10), image=tkimg)
 
-    def set_qvals(self, q_values):
+    def set_qvals(self, action, q_values):
         self.q_values = q_values
+        self.action = action
+        self.qmap_update = True
 
     # mapping q_value where the agent moves
     def map_qvals(self):
-        q_values = self.q_values
-        if len(q_values):
-            q_values = (q_values - min(q_values))/(max(q_values) - min(q_values)) # normalization
-        for i in range(len(q_values)):
-            agent_state = self.env.step_dummy(i)
-            q_val = int(q_values[i] * 100)
-            x = int(agent_state[0] * self.WIDTH/10 + self.WIDTH/2)
-            y = int(self.HIGHT - agent_state[1] * self.WIDTH/10)
-            r = 2
-            color = "gray" + str(q_val)
-            self.board.create_oval(x-r, y-r, x+r, y+r, fill=color) 
+        r = 2
+        if self.qmap_update:
+            q_values = self.q_values
+            max_q = np.argmax(q_values)
+            action = self.action
+            self.qmap.clear()
+            tmp = [(),()]
+            if len(q_values):
+                q_values = (q_values - min(q_values))/(max(q_values) - min(q_values)) # normalization
+            for i in range(len(q_values)):
+                agent_state = self.env.step_dummy(i)
+                q_val = int(q_values[i] * 100)
+                x = int(agent_state[0] * self.WIDTH/10 + self.WIDTH/2)
+                y = int(self.HIGHT - agent_state[1] * self.WIDTH/10)
+                if (i == max_q):
+                    color = "yellow"
+                    tmp[0] = (x, y, color)
+                if (i == action):
+                    color = "red"
+                    tmp[1] = (x, y, color)
+                else:
+                    color = "gray" + str(q_val)
+                    self.board.create_oval(x-r, y-r, x+r, y+r, fill=color)
+                    self.qmap.append((x, y, color))
+            for q in tmp:
+                self.board.create_oval(q[0]-r, q[1]-r, q[0]+r, q[1]+r, fill=q[2])
+                self.qmap.append(q)
+            self.qmap_update = False
+        else:
+            for q in self.qmap:
+                x = q[0]
+                y = q[1]
+                color = q[2]
+                self.board.create_oval(x-r, y-r, x+r, y+r, fill=color)
+
             
     def set_button(self):
         self.button = tk.Button(self, text="next", bg="gray", command=self.update_widgets)

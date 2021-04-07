@@ -20,7 +20,7 @@ BUFFER_SIZE = int(1e5)  # replay buffer size
 BATCH_SIZE = 64         # minibatch size, or how many samples taken the replay buffer for experience replay
 GAMMA = 0.995            # discount factor
 TAU = 1e-3              # for soft update of target parameters
-LR = 5e-4               # learning rate
+LR = 0.1               # learning rate
 UPDATE_EVERY = 4        # how often to update the network
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -192,18 +192,21 @@ if __name__ == "__main__":
     runInterval = 50
     displayInterval = 10
     SOLVED_NUM = 750 / runInterval # ideal step number to achieve goal, depending on intervel
-    SOLVED_SCORE = 1.0 * (GAMMA ** SOLVED_NUM) # judge if this network has been trained enough
+    # SOLVED_SCORE = 1.0 * (GAMMA ** SOLVED_NUM) # judge if this network has been trained enough
+    SOLVED_SCORE = 0.6
 
     show_flag = [False, False] # flag for displaying [(show or not), (main thread and GUI thread interval are synchronized or not (this is for speed up training but display the simulation))]
 
     dqn_agent = DQNAgent(state_size = 5 + 4 * Agent.MAX_OPPS, action_size=11*11, seed = 0)
+    ## uncommend below line and put the specific model state to train from
+    # dqn_agent.qnetwork_local.load_state_dict(torch.load("params/model_2021-04-06-17-52_3_50_250.pth", map_location=device))
     global env
-    env = Env(1, runInterval, actionInterval) # env = Env(numOpps, runInterval, actionInterval) starting from 3 fewer opponents
+    env = Env(numOpps, runInterval, actionInterval) # env = Env(numOpps, runInterval, actionInterval) starting from 3 fewer opponents
     # env.agent.setThetaRange((np.pi*2/5, np.pi*(1-2/5)))  # starting from proceeding almost straight
     env.reset()
 
 
-    def dqn(n_episodes= 50000, max_t = 1000, eps_start=1.0, eps_end = 0.01, eps_decay=0.999):
+    def dqn(n_episodes= 50000, max_t = 1000, eps_start=1.0, eps_end = 0.01, eps_decay=0.995):
         """Deep Q-Learning
         
         Params
@@ -242,18 +245,19 @@ if __name__ == "__main__":
                     env.gui.set_interval(runInterval)
                 elif (i_episode == display_episodes[display_index][1]):
                     show_flag[1] = False
-                    display_index += 1
+                    if (display_index < len(display_episodes) - 1):
+                        display_index += 1
                     env.gui.set_interval(30 * 1000) # set proper GUI interval depending on the episodes at which the display is shown
                 elif (i_episode == display_episodes[display_index][0] - 100):
                     env.gui.set_interval(1 * 1000)
 
             ### change the env conditions
-            if (i_episode == 5000):
-                # env.agent.setThetaRange(((np.pi/3, np.pi*2/3)))
-                env.change_opps(2)
-            if (i_episode == 10000):
-                # env.agent.setThetaRange(((np.pi/6, np.pi*5/6)))
-                env.change_opps(3)
+            # if (i_episode == 20000):
+            #     # env.agent.setThetaRange(((np.pi/3, np.pi*2/3)))
+            #     env.change_opps(5)
+            # if (i_episode == 50000):
+            #     # env.agent.setThetaRange(((np.pi/6, np.pi*5/6)))
+            #     env.change_opps(7)
 
 
             state = env.reset()
@@ -289,7 +293,7 @@ if __name__ == "__main__":
                 print('\rEpisode {}\t Average Score {:.4f} \tAgerage Step {:.2f}'.format(i_episode,np.mean(scores_window), np.mean(step_window)))
                 average_scores.append(np.mean(scores_window))
                 
-            if np.mean(scores_window)>=SOLVED_SCORE:
+            if len(scores_window) > 50 and np.mean(scores_window)>=SOLVED_SCORE:
                 print('\nEnvironment solve in {:d} epsiodes!\tAverage score: {:.2f}'.format(i_episode-100,np.mean(scores_window)))
                 torch.save(dqn_agent.qnetwork_local.state_dict(),'./params/checkpoint.pth')
                 break

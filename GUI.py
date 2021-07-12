@@ -58,9 +58,9 @@ class GUI(tk.Tk):
             position = self.opps.get(i).getPosition()
             angle = self.opps.get(i).theta * 180 / np.pi
             if (not self.opps.get(i).seen):
-                tkimgs.append(ImageTk.PhotoImage(image=self.oppImage.rotate(angle, expand=True, fillcolor="white"), master=self))
+                tkimgs.append(ImageTk.PhotoImage(image=self.oppImage.rotate(angle, expand=True), master=self))
             else:  
-                tkimgs.append(ImageTk.PhotoImage(image=self.oppImageSeen.rotate(angle, expand=True, fillcolor="white"), master=self))
+                tkimgs.append(ImageTk.PhotoImage(image=self.oppImageSeen.rotate(angle, expand=True), master=self))
             #print("opponent "+str(i),", positoin "+str(position), ", angle "+str(angle))
             #print((int(position[0] * 60), int(position[1] * 60)))
             self.board.create_image(int(position[0] * self.WIDTH/10 + self.WIDTH/2), self.HIGHT - int(position[1] * self.WIDTH/10), image=tkimgs[i])
@@ -69,7 +69,7 @@ class GUI(tk.Tk):
         global tkimg
         position = self.agent.getPosition()
         angle = self.agent.theta * 180 / np.pi
-        tkimg = ImageTk.PhotoImage(image=self.agentImage.rotate(angle, expand=True, fillcolor="white"), master=self)
+        tkimg = ImageTk.PhotoImage(image=self.agentImage.rotate(angle, expand=True), master=self)
         #print("agent", ", position "+str(position), ", angle "+str(angle))
         self.board.create_image(int(position[0] * self.WIDTH/10 + self.WIDTH/2), self.HIGHT - int(position[1] * self.WIDTH/10), image=tkimg)
 

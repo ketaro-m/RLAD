@@ -25,7 +25,7 @@ def run(env, dqn_agent, interval):
         ##
 
         ## comment out this if you don't wanna wait for Enter key to update states
-        input() # waiting for Enter input
+        # input() # waiting for Enter input
 
         next_state,reward,done,goal_flag = env.step(action, display=True)
         state = next_state
@@ -60,17 +60,15 @@ def main():
     actionInterval = 250 # interval to update the actions [ms]
     runInterval = 50
     displayInterval = 25
-    # 
+    # construct q-network (initialize with a parameter state if any)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     dqn_agent = DQNAgent(state_size = 5 + 4 * Agent.MAX_OPPS, action_size=11*11, seed = 0)
-    dqn_agent.qnetwork_local.load_state_dict(torch.load("params/model_2021-04-07-02-51_3_50_50.pth", map_location=device))
+    # dqn_agent.qnetwork_local.load_state_dict(torch.load("params/model_2021-04-06-17-52_3_50_250.pth", map_location=device))
+    #
     env = Env(int(args[1]), runInterval, actionInterval)
     env.reset()
     runThread = threading.Thread(target=run, args=(env, dqn_agent, runInterval))
     displayThread = threading.Thread(target=display, args=(env, displayInterval))
-    # create and run threads
-    # runThread = threading.Thread(target=run, args=(agent, opps, runInterval))
-    # displayThread = threading.Thread(target=display, args=(agent, opps, displayInterval))
     
     global flag
     flag = True
